@@ -9,7 +9,7 @@ bool generateGrayCodes(char wordLengthBits, bool beckett) {
     if (sizeof(Word) < wordLengthBytes) {
         fprintf(
             stderr,
-            "Requested word length requires %d bytes, but the Word datatype is %d bytes\n",
+            "Requested word length requires %u bytes, but the Word datatype is %lu bytes\n",
             wordLengthBytes, sizeof(Word)
         );
         return false;
@@ -56,7 +56,7 @@ bool generateGrayCodes(char wordLengthBits, bool beckett) {
                 }
                 if (!foundReverseIsomorph) {
                     count++;
-                    fprintf(stdout, "count = %d\n", count);
+                    printf("count = %lu\n", count);
                     finalCodes.push_back(prevCode.sequence);
 
                     Word prevWord = 0;
@@ -66,20 +66,20 @@ bool generateGrayCodes(char wordLengthBits, bool beckett) {
                         oneHot = prevWord ^ prevCode.sequence[w];
                         transitionIndex = 0;
                         while ((oneHot >>= 1) > 0) transitionIndex++;
-                        fprintf(stdout, "%u", transitionIndex);
+                        printf("%u", transitionIndex);
                         prevWord = prevCode.sequence[w];
                     }
                     oneHot = prevWord ^ 0x00;  // get transition to 0 (xor is a nop here, silly)
                     transitionIndex = 0;
                     while ((oneHot >>= 1) > 0) transitionIndex++;
-                    fprintf(stdout, "%u", transitionIndex);
-                    fprintf(stdout, "\n");
+                    printf("%u", transitionIndex);
+                    printf("\n");
 
                     // prevCode.print();
                 }
 
                 // if (count % 100 == 0) {
-                //     fprintf(stdout, "%d\n", count);
+                //     printf("%d\n", count);
                 // }
             }
         }
@@ -146,13 +146,13 @@ bool generateGrayCodes(char wordLengthBits, bool beckett) {
                     }
                 }
                 // else {
-                //     std::fprintf(stdout, "Denying Beckett candidate 0b");
+                //     printf("Denying Beckett candidate 0b");
                 //     for (int i = wordLengthBits - 1; i >= 0; i--) {
-                //         std::fprintf(stdout, "%s", (candidateWord & (1 << i)) > 0 ? "1" : "0");
+                //         printf("%s", (candidateWord & (1 << i)) > 0 ? "1" : "0");
                 //     }
-                //     std::fprintf(stdout, " w/times ");
+                //     printf(" w/times ");
                 //     for (int i = wordLengthBits - 1; i >= 0; i--) {
-                //         std::fprintf(stdout, "%d, ", prevCode.setTimes[i]);
+                //         printf("%d, ", prevCode.setTimes[i]);
                 //     }
                 //     std::fprintf(
                 //         stdout,
@@ -253,9 +253,9 @@ void GrayCode::print() {
         }
     }
     for (std::string str : strs) {
-        fprintf(stdout, "%s\n", str.c_str());
+        printf("%s\n", str.c_str());
     }
-    fprintf(stdout, "\n");
+    printf("\n");
 }
 
 std::vector<bool>::size_type factorial(Word n) {
