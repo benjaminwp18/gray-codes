@@ -24,9 +24,9 @@ template <typename T> void transferStack(std::stack<T> &srcStack, std::stack<T> 
 }
 std::vector<bool>::size_type factorial(Word n);
 bool getBit(Word word, Word bitIndex);
-bool generateGrayCodes(char wordLengthBits, bool cyclic, bool beckett);
+bool generateGrayCodes(char wordLengthBits, bool beckett);
 bool isIsomorphic(std::vector<Word> sequence1, std::vector<Word> sequence2,
-    std::vector<std::vector<Word>> bitPositionPermutations, bool cyclic, Word wordLengthBits);
+    std::vector<std::vector<Word>> bitPositionPermutations, Word wordLengthBits);
 
 class BitVector {
     private:

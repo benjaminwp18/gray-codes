@@ -1,10 +1,10 @@
 #include <main.hpp>
 
 int main() {
-    generateGrayCodes(5, true, true);
+    generateGrayCodes(5, true);
 }
 
-bool generateGrayCodes(char wordLengthBits, bool cyclic, bool beckett) {
+bool generateGrayCodes(char wordLengthBits, bool beckett) {
     Word wordLengthBytes = (wordLengthBits / 8) + (wordLengthBits % 8 != 0 ? 1 : 0);
     if (sizeof(Word) < wordLengthBytes) {
         fprintf(
@@ -20,23 +20,12 @@ bool generateGrayCodes(char wordLengthBits, bool cyclic, bool beckett) {
     std::stack<GrayCode> treeLayer = std::stack<GrayCode>();
     unsigned long count = 0;
 
-    if (!cyclic) {
-        for (Word w = 0; w < 1 << wordLengthBits; w++) {
-            treeLayer.push(GrayCode(sequenceLength, wordLengthBits));
-            treeLayer.top().available.toggle(w);
-            treeLayer.top().sequence.push_back(w);
-            // No need to init setTimes, they're already all 0
-        }
-        transferStack(treeLayer, stack);
-    }
-    else {
-        // If we only accept cyclic sequences, all legal codes with nonzero first words
-        //  can be found by rotating one of the codes with zero as the first word,
-        //  so we only need to explore the subtree starting with zero
-        stack.push(GrayCode(sequenceLength, wordLengthBits));
-        stack.top().available.toggle(0);
-        stack.top().sequence.push_back(0);
-    }
+    // If we only accept cyclic sequences, all legal codes with nonzero first words
+    //  can be found by rotating one of the codes with zero as the first word,
+    //  so we only need to explore the subtree starting with zero
+    stack.push(GrayCode(sequenceLength, wordLengthBits));
+    stack.top().available.toggle(0);
+    stack.top().sequence.push_back(0);
 
     std::vector<std::vector<Word>> finalCodes = std::vector<std::vector<Word>>();
     std::vector<Word> curPermutation = std::vector<Word>(wordLengthBits, 0);
@@ -53,15 +42,14 @@ bool generateGrayCodes(char wordLengthBits, bool cyclic, bool beckett) {
         GrayCode prevCode = stack.top();
         stack.pop();
         if (prevCode.sequence.size() == sequenceLength) {
-            if (!cyclic || (prevCode.sequence.back() & (prevCode.sequence.back() - 1)) == 0) {
-                // Either we aren't checking for cycles
-                // or the last element is a single bit flip away from zero
+            if ((prevCode.sequence.back() & (prevCode.sequence.back() - 1)) == 0) {
+                // The last element is a single bit flip away from zero
 
                 // Ignore codes that are isomorphic via having their words reversed + bits permuted
                 bool foundReverseIsomorph = false;
                 for (std::vector<Word> sequence : finalCodes) {
                     if (isIsomorphic(prevCode.sequence, sequence,
-                            bitPositionPermutations, cyclic, wordLengthBits)) {
+                            bitPositionPermutations, wordLengthBits)) {
                         foundReverseIsomorph = true;
                         break;
                     }
@@ -213,21 +201,21 @@ bool GrayCode::isBitOpen(Word bitIndex) {
 }
 
 bool isIsomorphic(std::vector<Word> sequence1, std::vector<Word> sequence2,
-        std::vector<std::vector<Word>> bitPositionPermutations, bool cyclic, Word wordLengthBits) {
+        std::vector<std::vector<Word>> bitPositionPermutations, Word wordLengthBits) {
     bool candidateIsIsomorphic = false;
     for (std::vector<Word> permutation : bitPositionPermutations) {
         candidateIsIsomorphic = true;
         // Cyclic codes are reversed and rotated by 1 because they can't end in 0
-        for (Word w = cyclic ? 1 : 0; w < sequence1.size(); w++) {
+        for (Word w = 1; w < sequence1.size(); w++) {
             for (Word b = 0; b < wordLengthBits; b++) {
                 if (getBit(sequence1[w], b) !=
-                    getBit(sequence2[sequence2.size() - w - (cyclic ? 0 : 1)], permutation[b])) {
+                    getBit(sequence2[sequence2.size() - w], permutation[b])) {
                     // std::fprintf(
                     //     stdout, "Comparing bit %u, %u (%u) to %u, %u (%u)\n",
                     //     w, b,
                     //     getBit(sequence1[w], b),
-                    //     sequence2.size() - w - (cyclic ? 0 : 1), permutation[b],
-                    //     getBit(sequence2[sequence2.size() - w - (cyclic ? 0 : 1)], permutation[b])
+                    //     sequence2.size() - w, permutation[b],
+                    //     getBit(sequence2[sequence2.size() - w], permutation[b])
                     // );
                     candidateIsIsomorphic = false;
                     break;
