@@ -10,6 +10,7 @@ int main() {
 
     Generator generator(n, true);
     std::vector<Generator::GrayCode> results = std::vector<Generator::GrayCode>();
+    Word completedStubs = 0;
 
     printf("Generating stubs to a depth of %u with n = %u\n", maxDepth, n);
     std::vector<Generator::GrayCode> stubs = generator.generateStubs(maxDepth);
@@ -18,12 +19,21 @@ int main() {
 
     printf("Distributing stubs among max %lu OpenMP parallel threads\n", omp_get_max_threads());
 
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(thread_results, generator, stubs, completedStubs)
     for (size_t i = 0; i < stubs.size(); ++i) {
-        printf("Stub %lu assigned to thread %d\n", i, omp_get_thread_num());
+        // printf("Stub %lu assigned to thread %d\n", i, omp_get_thread_num());
         thread_results[i] = generator.generate(stubs[i]);
-        printf("Thread %d finished stub %lu with %lu candidate codes\n",
-            omp_get_thread_num(), i, thread_results[i].size());
+        // printf("Thread %d finished stub %lu with %lu candidate codes\n",
+        //     omp_get_thread_num(), i, thread_results[i].size());
+
+        #pragma omp atomic
+        completedStubs++;
+
+        // if (omp_get_thread_num() == 0) {
+        printf("Progress: %u / %lu (%d%%)\n", completedStubs, stubs.size(),
+            (int)((float)completedStubs / stubs.size() * 100));
+        fflush(stdout);
+        // }
     }
 
     for (const std::vector<Generator::GrayCode> &local_results : thread_results) {
