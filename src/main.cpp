@@ -6,8 +6,8 @@ typedef uint8_t Word;
 typedef gray_codes::GrayCodeGenerator<Word> Generator;
 
 int main() {
-    Word n = 5;
-    Word maxDepth = 5;
+    Word n = 6;
+    Word maxDepth = 20;
 
     Generator generator(n, true);
     std::vector<Generator::GrayCode> results = std::vector<Generator::GrayCode>();
@@ -20,7 +20,7 @@ int main() {
 
     printf("Distributing stubs among max %lu OpenMP parallel threads\n", omp_get_max_threads());
 
-    #pragma omp parallel for default(none) shared(thread_results, generator, stubs, completedStubs)
+    #pragma omp parallel for default(none) shared(thread_results, generator, stubs, completedStubs, stdout)
     for (size_t i = 0; i < stubs.size(); ++i) {
         // printf("Stub %lu assigned to thread %d\n", i, omp_get_thread_num());
         thread_results[i] = generator.generate(stubs[i]);
