@@ -38,8 +38,6 @@ class GrayCodeGenerator {
     public:
         GrayCodeGenerator(Word wordLengthBits, bool beckett);
 
-        void generate();
-
         // TODO: consider making GrayCode a struct
         class GrayCode {
             public:
@@ -67,11 +65,25 @@ class GrayCodeGenerator {
                 void print();
         };
 
+        std::vector<GrayCode> generate() {
+            return generate(GrayCode(0, 0), 0);
+        }
+        std::vector<GrayCode> generate(GrayCode stub) {
+            return generate(stub, 0);
+        }
+        std::vector<GrayCode> generateStubs(Word maxDepth) {
+            return generate(GrayCode(0, 0), maxDepth);
+        }
+
+        void insertIfUnique(GrayCode newCode, std::vector<GrayCode> &codes);
+
     private:
         Word wordLengthBits;
         Word sequenceLength;
         bool beckett;
         std::vector<std::vector<Word>> bitPositionPermutations;
+
+        std::vector<GrayCode> generate(GrayCode stub, Word maxDepth);
 
         bool isIsomorphic(std::vector<Word> sequence1,
                           std::vector<Word> sequence2);

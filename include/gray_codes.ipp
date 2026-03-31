@@ -38,62 +38,35 @@ GrayCodeGenerator<Word>::GrayCodeGenerator(Word wordLengthBits, bool beckett) :
 }
 
 template <typename Word>
-void GrayCodeGenerator<Word>::generate() {
+std::vector<typename GrayCodeGenerator<Word>::GrayCode>
+GrayCodeGenerator<Word>::generate(GrayCode stub, Word maxDepth) {
     std::stack<GrayCode> stack = std::stack<GrayCode>();
     std::stack<GrayCode> treeLayer = std::stack<GrayCode>();
+    std::vector<GrayCode> finalCodes = std::vector<GrayCode>();
     unsigned long count = 0;
 
-    // If we only accept cyclic sequences, all legal codes with nonzero first words
-    //  can be found by rotating one of the codes with zero as the first word,
-    //  so we only need to explore the subtree starting with zero
-    stack.push(GrayCode(sequenceLength, wordLengthBits));
-    stack.top().available.toggle(0);
-    stack.top().sequence.push_back(0);
-
-    std::vector<std::vector<Word>> finalCodes = std::vector<std::vector<Word>>();
+    if (stub.sequence.size() > 0) {
+        stack.push(stub);
+    }
+    else {
+        // If we only accept cyclic sequences, all legal codes with nonzero first words
+        //  can be found by rotating one of the codes with zero as the first word,
+        //  so we only need to explore the subtree starting with zero
+        stack.push(GrayCode(sequenceLength, wordLengthBits));
+        stack.top().available.toggle(0);
+        stack.top().sequence.push_back(0);
+    }
 
     while (stack.size() > 0) {
         GrayCode prevCode = stack.top();
         stack.pop();
-        if (prevCode.sequence.size() == sequenceLength) {
+        if (maxDepth > 0 && prevCode.sequence.size() == maxDepth) {
+            finalCodes.push_back(prevCode);
+        }
+        else if (prevCode.sequence.size() == sequenceLength) {
             if ((prevCode.sequence.back() & (prevCode.sequence.back() - 1)) == 0) {
                 // The last element is a single bit flip away from zero
-
-                // Ignore codes that are isomorphic via having their words reversed + bits permuted
-                bool foundReverseIsomorph = false;
-                for (std::vector<Word> sequence : finalCodes) {
-                    if (isIsomorphic(prevCode.sequence, sequence)) {
-                        foundReverseIsomorph = true;
-                        break;
-                    }
-                }
-                if (!foundReverseIsomorph) {
-                    count++;
-                    printf("count = %lu\n", count);
-                    finalCodes.push_back(prevCode.sequence);
-
-                    Word prevWord = 0;
-                    Word oneHot = 0;
-                    Word transitionIndex = 0;
-                    for (Word w = 1; w < prevCode.sequence.size(); w++) {
-                        oneHot = prevWord ^ prevCode.sequence[w];
-                        transitionIndex = 0;
-                        while ((oneHot >>= 1) > 0) transitionIndex++;
-                        printf("%u", transitionIndex);
-                        prevWord = prevCode.sequence[w];
-                    }
-                    oneHot = prevWord ^ 0x00;  // get transition to 0 (xor is a nop here, silly)
-                    transitionIndex = 0;
-                    while ((oneHot >>= 1) > 0) transitionIndex++;
-                    printf("%u", transitionIndex);
-                    printf("\n");
-
-                    // prevCode.print();
-                }
-
-                // if (count % 100 == 0) {
-                //     printf("%d\n", count);
-                // }
+                insertIfUnique(prevCode, finalCodes);
             }
         }
         else {
@@ -187,13 +160,15 @@ void GrayCodeGenerator<Word>::generate() {
             transferStack(treeLayer, stack);
         }
     }
+
+    return finalCodes;
 }
 
 template <typename Word>
 bool GrayCodeGenerator<Word>::isIsomorphic(std::vector<Word> sequence1,
                                            std::vector<Word> sequence2) {
     bool candidateIsIsomorphic = false;
-    for (std::vector<Word> permutation : bitPositionPermutations) {
+    for (std::vector<Word> &permutation : bitPositionPermutations) {
         candidateIsIsomorphic = true;
         // Cyclic codes are reversed and rotated by 1 because they can't end in 0
         for (Word w = 1; w < sequence1.size(); w++) {
@@ -218,6 +193,21 @@ bool GrayCodeGenerator<Word>::isIsomorphic(std::vector<Word> sequence1,
         }
     }
     return false;
+}
+
+template <typename Word>
+void GrayCodeGenerator<Word>::insertIfUnique(GrayCode newCode, std::vector<GrayCode> &codes) {
+    // Ignore codes that are isomorphic via having their words reversed + bits permuted
+    bool foundReverseIsomorph = false;
+    for (GrayCode &savedCode : codes) {
+        if (isIsomorphic(newCode.sequence, savedCode.sequence)) {
+            foundReverseIsomorph = true;
+            break;
+        }
+    }
+    if (!foundReverseIsomorph) {
+        codes.push_back(newCode);
+    }
 }
 
 
@@ -257,13 +247,13 @@ bool GrayCodeGenerator<Word>::GrayCode::isOldestSetBit(Word bitIndex) {
 template <typename Word>
 void GrayCodeGenerator<Word>::GrayCode::print() {
     std::vector<std::string> strs = std::vector<std::string>(setTimes.size(), "");
-    for (Word word : sequence) {
+    for (Word &word : sequence) {
         for (Word i = 0; i < strs.size(); i++) {
             strs[i] += (word & 0x01) == 0x01 ? '1' : '0';
             word >>= 1;
         }
     }
-    for (std::string str : strs) {
+    for (std::string &str : strs) {
         printf("%s\n", str.c_str());
     }
     printf("\n");
