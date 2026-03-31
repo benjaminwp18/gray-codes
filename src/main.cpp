@@ -1,12 +1,13 @@
 #include "gray_codes.hpp"
 #include <omp.h>
+#include <fstream>
 
 typedef uint8_t Word;
 typedef gray_codes::GrayCodeGenerator<Word> Generator;
 
 int main() {
-    Word n = 6;
-    Word maxDepth = 20;
+    Word n = 5;
+    Word maxDepth = 5;
 
     Generator generator(n, true);
     std::vector<Generator::GrayCode> results = std::vector<Generator::GrayCode>();
@@ -43,25 +44,31 @@ int main() {
         }
     }
 
+    FILE *resultsFile = fopen("results.log", "w");
+
     printf("\nFinal codes:\n");
 
     for (const Generator::GrayCode &result : results) {
         Word prevWord = 0;
         Word oneHot = 0;
         Word transitionIndex = 0;
-        printf("\t");
+        // printf("\t");
         for (Word w = 1; w < result.sequence.size(); w++) {
             oneHot = prevWord ^ result.sequence[w];
             transitionIndex = 0;
             while ((oneHot >>= 1) > 0) transitionIndex++;
-            printf("%u", transitionIndex);
+            fprintf(resultsFile, "%u", transitionIndex);
+            // printf("%u", transitionIndex);
             prevWord = result.sequence[w];
         }
         oneHot = prevWord ^ 0x00;  // get transition to 0 (xor is a nop here, silly)
         transitionIndex = 0;
         while ((oneHot >>= 1) > 0) transitionIndex++;
-        printf("%u", transitionIndex);
-        printf("\n");
+        fprintf(resultsFile, "%u\n", transitionIndex);
+        // printf("%u\n", transitionIndex);
     }
+    fprintf(resultsFile, "Total count = %lu for n = %u\n", results.size(), n);
     printf("Total count = %lu for n = %u\n", results.size(), n);
+
+    fclose(resultsFile);
 }
