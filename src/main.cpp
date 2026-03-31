@@ -11,7 +11,7 @@ int main() {
 
     Generator generator(n, true);
     std::vector<Generator::GrayCode> results = std::vector<Generator::GrayCode>();
-    Word completedStubs = 0;
+    std::vector<bool>::size_type completedStubs = 0;
 
     printf("Generating stubs to a depth of %u with n = %u\n", maxDepth, n);
     std::vector<Generator::GrayCode> stubs = generator.generateStubs(maxDepth);
@@ -31,7 +31,7 @@ int main() {
         completedStubs++;
 
         // if (omp_get_thread_num() == 0) {
-        printf("Progress: %u / %lu (%d%%)\n", completedStubs, stubs.size(),
+        printf("Progress: %lu / %lu (%d%%)\n", completedStubs, stubs.size(),
             (int)((float)completedStubs / stubs.size() * 100));
         fflush(stdout);
         // }
